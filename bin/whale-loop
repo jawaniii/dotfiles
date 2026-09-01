@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Continuously rotates the whale in its own pane, forever — never settles into a
+# static frame. Meant to run in a dedicated tmux pane (like btop) alongside a real
+# shell pane you actually type in, not in a pane you need to type into yourself.
+set -euo pipefail
+
+FRAMES_DIR="$HOME/.config/fastfetch/loop-frames"
+FRAME_DELAY="${1:-0.15}"
+
+tput civis 2>/dev/null || true
+trap 'tput cnorm 2>/dev/null || true' EXIT
+
+while true; do
+  for f in "$FRAMES_DIR"/s*.ansi; do
+    clear
+    cat "$f"
+    sleep "$FRAME_DELAY"
+  done
+done

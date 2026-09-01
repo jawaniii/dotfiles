@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# DOCKER-101 — toggle the btop pane in/out of the 2-pane dashboard
-# without killing the tmux session itself.
+# DOCKER-101 — toggle the btop pane in/out of the 3-pane dashboard (whale-loop left,
+# btop top-right, shell bottom-right) without killing the session or the shell pane.
 set -uo pipefail
 
 SESSION="dashboard"
@@ -14,10 +14,11 @@ if [ -n "$btop_pane" ]; then
   exit 0
 fi
 
-# not currently shown -> recreate it to the right of the remaining (fastfetch) pane
-target=$(tmux list-panes -t "${SESSION}:${WINDOW}" -F '#{pane_id}' 2>/dev/null | head -1)
+# not currently shown -> recreate it above the shell pane in the right column
+target=$(tmux list-panes -t "${SESSION}:${WINDOW}" -F '#{pane_id} #{pane_left}' 2>/dev/null \
+  | sort -k2 -n | tail -1 | cut -d' ' -f1)
 
 if [ -n "$target" ]; then
-  tmux split-window -h -t "$target" -p 50
+  tmux split-window -v -b -t "$target" -p 65
   tmux send-keys -t "${SESSION}:${WINDOW}" "btop" C-m
 fi

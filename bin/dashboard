@@ -1,20 +1,35 @@
 #!/usr/bin/env bash
-# DOCKER-101 — personal tmux dashboard: fastfetch (left) / btop, Catppuccin Mocha (right)
+# DOCKER-101 — personal tmux dashboard: rotating whale (left, decorative) /
+# btop (top-right) / a real shell to type in (bottom-right)
 set -euo pipefail
 
 SESSION="dashboard"
 WINDOW="main"
 
+# tmux refuses to `attach` a session from inside another tmux client (its own
+# nesting guard: "sessions should be nested with care"). Use switch-client
+# when already inside tmux, attach otherwise.
+goto_session() {
+  if [ -n "${TMUX:-}" ]; then
+    tmux switch-client -t "$SESSION"
+  else
+    exec tmux attach -t "$SESSION"
+  fi
+}
+
 if tmux has-session -t "$SESSION" 2>/dev/null; then
-  exec tmux attach -t "$SESSION"
+  goto_session
+  exit 0
 fi
 
 tmux new-session -d -s "$SESSION" -n "$WINDOW"
-tmux send-keys -t "$SESSION:$WINDOW" "whale-spin-intro ~/.config/fastfetch/umersprofile-simple.jsonc" C-m
+tmux send-keys -t "$SESSION:$WINDOW" "whale-loop" C-m
 
 tmux split-window -h -t "$SESSION:$WINDOW" -p 50
 tmux send-keys -t "$SESSION:$WINDOW.2" "btop" C-m
 
-tmux select-pane -t "$SESSION:$WINDOW.1"
+tmux split-window -v -t "$SESSION:$WINDOW.2" -p 35
 
-exec tmux attach -t "$SESSION"
+tmux select-pane -t "$SESSION:$WINDOW.3"
+
+goto_session
