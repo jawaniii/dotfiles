@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Called from a tmux client-attached/client-resized hook (see bin/dashboard) to
+# re-pin btop's pane back to its fixed floor width after a resize — but only if
+# the window is actually wide enough to fit both panes. Pulled out of bin/dashboard
+# into its own file after the inline one-liner version broke silently: building the
+# hook command as a bash string with escaped nested double-quotes worked when tested
+# standalone (`bash -c "$REPIN_BTOP"`), but tmux re-parses a hook's stored command
+# through its OWN command-line parser when the hook actually fires — that second,
+# untested parse pass stripped the embedded quotes, leaving a bare `$w` that always
+# evaluated empty (`tmux show-hooks` showed the stored command as `if [  -ge 101 ]`,
+# confirmed live, 2026-09-01). A real script file with plain space-separated argv
+# has no nested-quoting layer for either parser to mangle.
+set -euo pipefail
+
+SESSION="$1"
+WINDOW="$2"
+BTOP_WIDTH="$3"
+MIN_TOTAL="$4"
+
+w=$(tmux display-message -p -t "$SESSION" '#{window_width}')
+if [ "$w" -ge "$MIN_TOTAL" ]; then
+  tmux resize-pane -t "$SESSION:$WINDOW.2" -x "$BTOP_WIDTH"
+fi

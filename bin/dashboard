@@ -73,9 +73,20 @@ tmux send-keys -t "$SESSION:$WINDOW.2" "btop" C-m
 # width every time the hook fires and only force the floor if there's
 # actually room for both panes — otherwise leave tmux's own proportional
 # layout alone rather than fighting it into a state neither pane can render.
-REPIN_BTOP="w=\$(tmux display-message -p -t $SESSION '#{window_width}'); if [ \"\$w\" -ge $((BTOP_WIDTH + 1 + BTOP_MIN_ROOM)) ]; then tmux resize-pane -t $SESSION:$WINDOW.2 -x $BTOP_WIDTH; fi"
-tmux set-hook -t "$SESSION" client-attached "run-shell \"$REPIN_BTOP\""
-tmux set-hook -t "$SESSION" client-resized "run-shell \"$REPIN_BTOP\""
+#
+# SECOND landmine fixed here (found live, 2026-09-01): the first cut built this
+# hook as an inline bash string with escaped nested double-quotes. That string
+# tested fine standalone (`bash -c "$REPIN_BTOP"`), but tmux re-parses a hook's
+# STORED command through its own command-line parser when the hook actually
+# fires — an untested second parse pass that silently stripped the embedded
+# quotes, leaving a bare `$w` that always evaluated empty (`tmux show-hooks`
+# confirmed the stored command was `if [  -ge 101 ]` — the guard never worked
+# even once). Moved the logic into a real script file — plain space-separated
+# argv has no nested-quoting layer left for either parser to mangle.
+REPIN_HELPER="$HOME/dotfiles/bin/dashboard-repin-btop"
+MIN_TOTAL_FOR_REPIN=$((BTOP_WIDTH + 1 + BTOP_MIN_ROOM))
+tmux set-hook -t "$SESSION" client-attached "run-shell '$REPIN_HELPER $SESSION $WINDOW $BTOP_WIDTH $MIN_TOTAL_FOR_REPIN'"
+tmux set-hook -t "$SESSION" client-resized "run-shell '$REPIN_HELPER $SESSION $WINDOW $BTOP_WIDTH $MIN_TOTAL_FOR_REPIN'"
 
 tmux select-pane -t "$SESSION:$WINDOW.1"
 
