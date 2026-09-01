@@ -1,0 +1,23 @@
+{
+  "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/master/doc/json_schema.json",
+  "logo": {
+    "type": "none"
+  },
+  "modules": [
+    "title",
+    "separator",
+    "os",
+    "host",
+    "shell",
+    "terminal",
+    "cpu",
+    "packages",
+    {
+      "type": "command",
+      "key": "Docker",
+      "text": "docker --version"
+    },
+    "break",
+    "colors"
+  ]
+}

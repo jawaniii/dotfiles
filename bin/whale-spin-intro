@@ -1,23 +1,23 @@
 #!/usr/bin/env bash
-# Plays a short spin-in animation (pre-rendered ANSI frames of the whale rotating)
-# before settling into the real fastfetch banner. Ghostty has no native support for
-# animated Kitty-protocol logos (confirmed by the Ghostty maintainer, ghostty-org/ghostty
-# discussion #5218) so fastfetch's own --logo-animate can't do this on Ghostty — this is
-# a plain text flipbook instead, which works in any terminal.
+# Plays a short spin-in animation (pre-rendered ANSI frames of the whale rotating),
+# settles on a fixed frame, then fastfetch's stats print directly below it (logo
+# disabled in fastfetch itself — the whale on screen already IS the logo). Ghostty
+# has no native support for animated Kitty-protocol logos (confirmed by the Ghostty
+# maintainer, ghostty-org/ghostty discussion #5218) so this is a plain text flipbook
+# instead, which works in any terminal and at any reasonable width.
 set -euo pipefail
 
-CONFIG="${1:-$HOME/.config/fastfetch/config.jsonc}"
-FRAMES_DIR="$HOME/.config/fastfetch/hires-frames"
+CONFIG="${1:-$HOME/.config/fastfetch/umersprofile-stacked.jsonc}"
+FRAMES_DIR="$HOME/.config/fastfetch/small-frames"
 FULL_LAPS="${2:-2}"
-STOP_FRAME="${3:-5}"   # r05 = 60deg, matches whale-3d-logo.ansi exactly — the settle
-                        # frame IS the fastfetch logo file, so the cut is invisible.
+STOP_FRAME="${3:-5}"   # s05 = 60deg
 FRAME_DELAY="${4:-0.05}"
 
 tput civis 2>/dev/null || true
 trap 'tput cnorm 2>/dev/null || true' EXIT
 
 for ((i = 0; i < FULL_LAPS; i++)); do
-  for f in "$FRAMES_DIR"/r*.ansi; do
+  for f in "$FRAMES_DIR"/m*.ansi; do
     clear
     cat "$f"
     sleep "$FRAME_DELAY"
@@ -26,14 +26,13 @@ done
 
 for ((n = 0; n <= STOP_FRAME; n++)); do
   clear
-  cat "$FRAMES_DIR/r$(printf '%02d' "$n").ansi"
+  cat "$FRAMES_DIR/m$(printf '%02d' "$n").ansi"
   sleep "$FRAME_DELAY"
 done
 
 tput cnorm 2>/dev/null || true
 while read -r -t 0.05 -n 1000 _discard; do :; done 2>/dev/null || true
-# Move cursor back to the top WITHOUT erasing (no `clear`) — fastfetch's logo is the
-# exact same file as the frame already on screen, so it overwrites in place with
-# identical characters. Only the stats text (in previously-blank space) appears new.
-printf '\033[H'
+# No clear, no cursor-home: the whale stays exactly as printed above, and fastfetch
+# (logo disabled) prints its stats starting right where the cursor already is —
+# directly below the settled whale.
 exec fastfetch --config "$CONFIG"
