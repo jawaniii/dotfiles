@@ -46,8 +46,9 @@ tmux send-keys -t "$SESSION:$WINDOW" "whale-spin-intro ~/.config/fastfetch/umers
 # take everything else, so a wider window makes the WHALE bigger, not btop.
 BTOP_WIDTH=80
 BTOP_MIN_WIDTH=80
+BTOP_MIN_ROOM=20   # minimum cols the whale pane needs to still look like anything
 TOTAL_WIDTH="$REAL_COLS"
-if [ "$(( TOTAL_WIDTH - BTOP_WIDTH - 1 ))" -lt 20 ]; then
+if [ "$(( TOTAL_WIDTH - BTOP_WIDTH - 1 ))" -lt "$BTOP_MIN_ROOM" ]; then
   BTOP_WIDTH="$BTOP_MIN_WIDTH"
   echo "Window is only ${TOTAL_WIDTH} cols — btop kept at its minimum (80) so the whale pane still gets some room. Widen the window for more whale detail." >&2
 fi
@@ -62,8 +63,19 @@ tmux send-keys -t "$SESSION:$WINDOW.2" "btop" C-m
 # (reproduced directly: a 150-col build settling to 188 cols on attach came out
 # 88/99, not the intended 107/80). Re-pin btop back to its floor on both events
 # that can carry a late resize — the client attaching, and any resize after.
-tmux set-hook -t "$SESSION" client-attached "resize-pane -t \"$SESSION:$WINDOW.2\" -x $BTOP_WIDTH"
-tmux set-hook -t "$SESSION" client-resized "resize-pane -t \"$SESSION:$WINDOW.2\" -x $BTOP_WIDTH"
+#
+# LANDMINE fixed here (found live, 2026-09-01): the first cut of this re-pin
+# blindly forced btop to $BTOP_WIDTH regardless of the window's actual size —
+# on a genuinely narrow window (a smaller second monitor, ~<101 real cols) it
+# tried to force 80 anyway, leaving btop's own pane BELOW its own hard minimum
+# (observed: btop pane landed at 75 cols and printed its own "terminal size
+# too small" error, whale squeezed to a sliver). Re-check the window's LIVE
+# width every time the hook fires and only force the floor if there's
+# actually room for both panes — otherwise leave tmux's own proportional
+# layout alone rather than fighting it into a state neither pane can render.
+REPIN_BTOP="w=\$(tmux display-message -p -t $SESSION '#{window_width}'); if [ \"\$w\" -ge $((BTOP_WIDTH + 1 + BTOP_MIN_ROOM)) ]; then tmux resize-pane -t $SESSION:$WINDOW.2 -x $BTOP_WIDTH; fi"
+tmux set-hook -t "$SESSION" client-attached "run-shell \"$REPIN_BTOP\""
+tmux set-hook -t "$SESSION" client-resized "run-shell \"$REPIN_BTOP\""
 
 tmux select-pane -t "$SESSION:$WINDOW.1"
 
