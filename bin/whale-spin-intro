@@ -20,12 +20,19 @@ FRAME_WIDTH=50
 FRAME_HEIGHT=13
 STATS_HEIGHT=12
 
+# Hard caps: tput can occasionally return an unexpected value (a stale cache, a
+# terminal that doesn't answer the ioctl correctly, etc). Without a ceiling here, a
+# bad reading turns this into printing thousands of blank lines per frame — which
+# once made every new terminal window appear to hang. Never trust an environment-
+# derived number to size an unbounded loop without clamping it.
 LEFT_PAD_N=$(( (PANE_WIDTH - FRAME_WIDTH) / 2 ))
 [ "$LEFT_PAD_N" -lt 0 ] && LEFT_PAD_N=0
+[ "$LEFT_PAD_N" -gt 60 ] && LEFT_PAD_N=60
 LEFT_PAD=$(printf '%*s' "$LEFT_PAD_N" '')
 
 TOP_PAD_N=$(( (PANE_HEIGHT - FRAME_HEIGHT - STATS_HEIGHT) / 2 ))
 [ "$TOP_PAD_N" -lt 0 ] && TOP_PAD_N=0
+[ "$TOP_PAD_N" -gt 30 ] && TOP_PAD_N=30
 
 tput civis 2>/dev/null || true
 trap 'tput cnorm 2>/dev/null || true' EXIT
