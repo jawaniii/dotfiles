@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# Snaps the frontmost Ghostty window's on-screen POSITION back to the fixed spot set
+# in ghostty/config (window-position-x/y = 164,148 — centered on the built-in display,
+# 1728x1117 logical). Only touches position, not size — run this any time the window
+# has drifted (dragged, a different display was active, etc.) so a beat-4 recording
+# always starts from the exact same frame. Size stays whatever it currently is; if you
+# also want a fixed size, pass width/height in points as $1/$2.
+set -euo pipefail
+
+X=164
+Y=148
+
+if ! pgrep -qi "^ghostty$"; then
+  echo "dashboard-repin-window: Ghostty isn't running — nothing to reposition." >&2
+  exit 1
+fi
+
+if [ $# -ge 2 ]; then
+  W="$1"
+  H="$2"
+  osascript <<EOF
+tell application "System Events"
+  tell (first process whose name is "Ghostty")
+    set position of window 1 to {$X, $Y}
+    set size of window 1 to {$W, $H}
+  end tell
+end tell
+EOF
+else
+  osascript <<EOF
+tell application "System Events"
+  tell (first process whose name is "Ghostty")
+    set position of window 1 to {$X, $Y}
+  end tell
+end tell
+EOF
+fi
+
+echo "dashboard-repin-window: Ghostty window repositioned to ($X, $Y)."

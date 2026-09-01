@@ -6,6 +6,15 @@ window-padding-x = 12
 window-padding-y = 12
 macos-titlebar-style = hidden
 
+# Fixed launch position — centered on the built-in display (logical 1728x1117,
+# confirmed via `osascript ... bounds of window of desktop`), so the dashboard
+# lands in the exact same spot every time instead of wherever macOS's default
+# window-cascade logic puts it. window-save-state=false so a stale OS-restored
+# position can never win over this explicit x/y (2026-09-01, recording-consistency ask).
+window-position-x = 164
+window-position-y = 148
+window-save-state = never
+
 # Every new window/tab lands straight in the animated dashboard instead of a
 # plain shell. `command` needs a literal absolute path — Ghostty does not do
 # shell parsing (no ~, no globs) — and dashboard-or-shell falls back to a
