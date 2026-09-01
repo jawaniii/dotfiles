@@ -44,6 +44,8 @@ RUN curl -sS https://starship.rs/install.sh | sh -s -- -y
 COPY tmux/tmux.conf /root/.tmux.conf
 COPY starship/starship.toml /root/.config/starship.toml
 COPY fastfetch/umersprofile-simple.jsonc /root/.config/fastfetch/umersprofile-simple.jsonc
+COPY fastfetch/umersprofile-stacked.jsonc /root/.config/fastfetch/umersprofile-stacked.jsonc
+COPY fastfetch/centered-frames/ /root/.config/fastfetch/centered-frames/
 COPY btop/btop.conf /root/.config/btop/btop.conf
 COPY btop/themes/catppuccin_mocha.theme /root/.config/btop/themes/catppuccin_mocha.theme
 # Containers have no real hardware temp sensors to read — check_temp=true crashes btop
@@ -57,7 +59,14 @@ RUN sed -i 's/^check_temp = true/check_temp = false/' /root/.config/btop/btop.co
 RUN sed -i 's/^show_gpu_info = "Auto"/show_gpu_info = "Off"/' /root/.config/btop/btop.conf
 COPY bin/dashboard /usr/local/bin/dashboard
 COPY bin/tmux-toggle-btop /usr/local/bin/tmux-toggle-btop
-RUN chmod +x /usr/local/bin/dashboard /usr/local/bin/tmux-toggle-btop
+COPY bin/whale-spin-intro /usr/local/bin/whale-spin-intro
+RUN chmod +x /usr/local/bin/dashboard /usr/local/bin/tmux-toggle-btop /usr/local/bin/whale-spin-intro
+
+# dashboard resolves its repin helper at the fixed host path $HOME/dotfiles/bin/ (correct
+# on the real Mac, where dotfiles is a real clone) — mirror that same path inside the
+# image rather than patching the source script for a container-only special case.
+COPY bin/dashboard-repin-btop /root/dotfiles/bin/dashboard-repin-btop
+RUN chmod +x /root/dotfiles/bin/dashboard-repin-btop
 
 RUN echo 'eval "$(starship init zsh)"' >> /root/.zshrc
 
