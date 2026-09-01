@@ -1,9 +1,20 @@
 #!/usr/bin/env bash
 # DOCKER-101 — personal tmux dashboard: whale spins 3x, settles, fastfetch loads
 # its stats, then cursor appears (left) / btop full-height (right)
+#
+# Founder call (2026-09-01): the whale intro must replay on EVERY new Ghostty
+# window/tab, not just once per login. tmux sessions are global — a single
+# fixed session name ("dashboard") could only ever show the intro once, since
+# every later window just reattached to whatever the first window already
+# built (the old LANDMINE this replaced). Fixed by giving every invocation its
+# own uniquely-named session, scoped to this process's PID — stable across the
+# `exec` handoff from dashboard-or-shell, so each Ghostty window gets exactly
+# one session for its whole lifetime. A `client-detached` hook kills that
+# session the moment its window closes, so per-window sessions don't pile up
+# as orphaned tmux state once nobody's attached to them.
 set -euo pipefail
 
-SESSION="dashboard"
+SESSION="dashboard-$$"
 WINDOW="main"
 
 # tmux refuses to `attach` a session from inside another tmux client (its own
@@ -17,15 +28,6 @@ goto_session() {
   fi
 }
 
-# LANDMINE: if a "dashboard" session is already running, this reattaches to it
-# AS-IS and skips everything below — including the sizing logic. Editing this
-# script has no visible effect until the stale session is killed
-# (`tmux kill-session -t dashboard`) and dashboard is re-run to rebuild it.
-if tmux has-session -t "$SESSION" 2>/dev/null; then
-  goto_session
-  exit 0
-fi
-
 # A detached `tmux new-session -d` has no attached client yet, so it defaults to a
 # fake 80x24 — it does NOT know this real terminal's actual size. Capture the real
 # size from THIS shell (the one dashboard is actually being run from) first, and
@@ -35,6 +37,7 @@ REAL_COLS=$(tput cols)
 REAL_LINES=$(tput lines)
 
 tmux new-session -d -s "$SESSION" -n "$WINDOW" -x "$REAL_COLS" -y "$REAL_LINES"
+tmux set-hook -t "$SESSION" client-detached "kill-session -t \"$SESSION\""
 tmux send-keys -t "$SESSION:$WINDOW" "whale-spin-intro ~/.config/fastfetch/umersprofile-stacked.jsonc" C-m
 
 # tmux's -l sizes the NEW pane (btop) — btop hard-fails below 80 cols, so that's
@@ -50,6 +53,17 @@ if [ "$(( TOTAL_WIDTH - BTOP_WIDTH - 1 ))" -lt 20 ]; then
 fi
 tmux split-window -h -t "$SESSION:$WINDOW" -l "$BTOP_WIDTH"
 tmux send-keys -t "$SESSION:$WINDOW.2" "btop" C-m
+
+# The -l above only fixes the split at THIS moment's size. If the real Ghostty
+# window hasn't finished settling yet (its GPU-accelerated open animation can
+# still be resizing when this script's `tput cols` ran), tmux rescales both
+# panes proportionally the moment the real client actually attaches at its
+# final size — and that rescale does NOT preserve the fixed 80-col btop width
+# (reproduced directly: a 150-col build settling to 188 cols on attach came out
+# 88/99, not the intended 107/80). Re-pin btop back to its floor on both events
+# that can carry a late resize — the client attaching, and any resize after.
+tmux set-hook -t "$SESSION" client-attached "resize-pane -t \"$SESSION:$WINDOW.2\" -x $BTOP_WIDTH"
+tmux set-hook -t "$SESSION" client-resized "resize-pane -t \"$SESSION:$WINDOW.2\" -x $BTOP_WIDTH"
 
 tmux select-pane -t "$SESSION:$WINDOW.1"
 
