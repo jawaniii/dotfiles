@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # Plays a short spin-in animation (pre-rendered ANSI frames of the whale rotating),
 # settles on a fixed frame, then fastfetch's stats print directly below it (logo
-# disabled in fastfetch itself — the whale on screen already IS the logo). Both the
-# whale and the stats are left-anchored in the pane. Ghostty has no native support
-# for animated Kitty-protocol logos (confirmed by the Ghostty maintainer,
-# ghostty-org/ghostty discussion #5218) so this is a plain text flipbook instead,
-# which works in any terminal.
+# disabled in fastfetch itself — the whale on screen already IS the logo). The
+# whale keeps its original centered position; the stats text has its own
+# independent left margin (founder: moving the text should not move the whale).
+# Ghostty has no native support for animated Kitty-protocol logos (confirmed by
+# the Ghostty maintainer, ghostty-org/ghostty discussion #5218) so this is a
+# plain text flipbook instead, which works in any terminal.
 set -euo pipefail
 
 CONFIG="${1:-$HOME/.config/fastfetch/umersprofile-stacked.jsonc}"
@@ -14,16 +15,24 @@ FULL_LAPS="${2:-2}"
 STOP_FRAME="${3:-5}"   # b05 = 60deg
 FRAME_DELAY="${4:-0.05}"
 
+PANE_WIDTH=$(tput cols)
 PANE_HEIGHT=$(tput lines)
+FRAME_WIDTH=50
 FRAME_HEIGHT=13
 STATS_HEIGHT=12
 
-# Left-anchored with a small fixed margin, NOT centered against the whole pane
-# width — (PANE_WIDTH-FRAME_WIDTH)/2 pushed the block deep into the middle on a
-# wide whale pane (the pane gets "whatever's left" after btop's fixed width, so
-# it can be very wide). Founder wants it hugging the left edge (2026-09-01).
-LEFT_PAD_N=2
-LEFT_PAD=$(printf '%*s' "$LEFT_PAD_N" '')
+# Whale stays centered in the pane, same as its original position — untouched by
+# the text-only left-margin request below.
+WHALE_LEFT_PAD_N=$(( (PANE_WIDTH - FRAME_WIDTH) / 2 ))
+[ "$WHALE_LEFT_PAD_N" -lt 0 ] && WHALE_LEFT_PAD_N=0
+[ "$WHALE_LEFT_PAD_N" -gt 60 ] && WHALE_LEFT_PAD_N=60
+WHALE_LEFT_PAD=$(printf '%*s' "$WHALE_LEFT_PAD_N" '')
+
+# Fastfetch's stats text gets its own small fixed left margin, independent of
+# the whale's position (founder, 2026-09-01: "you moved the whale too, I just
+# wanted the text moved").
+STATS_LEFT_PAD_N=2
+STATS_LEFT_PAD=$(printf '%*s' "$STATS_LEFT_PAD_N" '')
 
 # Biased toward the top of the leftover space, not dead-centered (/2) — an even
 # split left too much empty space above the whale relative to below it once
@@ -40,7 +49,7 @@ trap 'tput cnorm 2>/dev/null || true' EXIT
 
 print_frame() {
   for ((p = 0; p < TOP_PAD_N; p++)); do echo; done
-  sed "s/^/${LEFT_PAD}/" "$1"
+  sed "s/^/${WHALE_LEFT_PAD}/" "$1"
 }
 
 for ((i = 0; i < FULL_LAPS; i++)); do
@@ -61,6 +70,7 @@ tput cnorm 2>/dev/null || true
 while read -r -t 0.05 -n 1000 _discard; do :; done 2>/dev/null || true
 # No clear, no cursor-home: the whale stays exactly as printed above, and fastfetch
 # (logo disabled) prints its stats starting right where the cursor already is —
-# directly below the settled whale, indented to match its left edge.
-fastfetch --pipe false --config "$CONFIG" | sed "s/^/${LEFT_PAD}/"
+# directly below the settled whale, using its own STATS_LEFT_PAD (not the
+# whale's), so the two can be repositioned independently.
+fastfetch --pipe false --config "$CONFIG" | sed "s/^/${STATS_LEFT_PAD}/"
 exec "$SHELL" -l
