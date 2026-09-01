@@ -5,3 +5,10 @@ font-size = 14
 window-padding-x = 12
 window-padding-y = 12
 macos-titlebar-style = hidden
+
+# Every new window/tab lands straight in the animated dashboard instead of a
+# plain shell. `command` needs a literal absolute path — Ghostty does not do
+# shell parsing (no ~, no globs) — and dashboard-or-shell falls back to a
+# plain login shell if `dashboard` fails to even start, so a broken dashboard
+# can never leave a window with nothing (see daily-log.md, 2026-09-01).
+command = /Users/umerhamid/.local/bin/dashboard-or-shell

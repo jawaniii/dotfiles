@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Ghostty's default command for every new window/tab (ghostty/config: `command`).
+# Tries the animated dashboard; if `dashboard` fails before it hands off to tmux
+# (missing binary, broken config, anything), falls back to a plain login shell
+# instead of leaving the window stuck or closing outright. This is the safety
+# net the earlier .zshrc-wired attempt didn't have (see daily-log.md,
+# 2026-09-01: that version could hang a brand new window with no escape route).
+#
+# Ghostty execs this directly (no login shell in between), so PATH is whatever
+# the GUI app inherited — NOT guaranteed to include Homebrew's bin, where tmux
+# actually lives. Set it explicitly so `dashboard`'s own `tmux`/`tput` calls
+# don't fail for a reason that has nothing to do with the dashboard itself.
+export PATH="$HOME/.local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:$PATH"
+
+exec dashboard || exec "${SHELL:-/bin/zsh}" -l

@@ -40,9 +40,10 @@ link "$DOTFILES/fastfetch/spin-frames"                 "$HOME/.config/fastfetch/
 link "$DOTFILES/btop/btop.conf"                        "$HOME/.config/btop/btop.conf"
 link "$DOTFILES/btop/themes/catppuccin_mocha.theme"    "$HOME/.config/btop/themes/catppuccin_mocha.theme"
 link "$DOTFILES/bin/dashboard"                         "$HOME/.local/bin/dashboard"
+link "$DOTFILES/bin/dashboard-or-shell"                "$HOME/.local/bin/dashboard-or-shell"
 link "$DOTFILES/bin/tmux-toggle-btop"                  "$HOME/.local/bin/tmux-toggle-btop"
 link "$DOTFILES/bin/whale-spin-intro"                  "$HOME/.local/bin/whale-spin-intro"
-chmod +x "$HOME/.local/bin/dashboard" "$HOME/.local/bin/tmux-toggle-btop" "$HOME/.local/bin/whale-spin-intro"
+chmod +x "$HOME/.local/bin/dashboard" "$HOME/.local/bin/dashboard-or-shell" "$HOME/.local/bin/tmux-toggle-btop" "$HOME/.local/bin/whale-spin-intro"
 
 echo "==> Wiring ~/.zshrc"
 MARKER=">>> dotfiles: tmux-guarded fastfetch >>>"
