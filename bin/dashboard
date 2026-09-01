@@ -25,7 +25,13 @@ fi
 tmux new-session -d -s "$SESSION" -n "$WINDOW"
 tmux send-keys -t "$SESSION:$WINDOW" "whale-spin-intro ~/.config/fastfetch/umersprofile-stacked.jsonc" C-m
 
-tmux split-window -h -t "$SESSION:$WINDOW" -p 50
+# tmux's -l sizes the NEW pane (btop), not the target — compute btop's width so the
+# whale pane ends up at exactly 80 cols regardless of the real window width.
+WHALE_PANE_WIDTH=80
+TOTAL_WIDTH=$(tmux display-message -p -t "$SESSION:$WINDOW" '#{window_width}')
+BTOP_WIDTH=$(( TOTAL_WIDTH - WHALE_PANE_WIDTH - 1 ))
+[ "$BTOP_WIDTH" -lt 20 ] && BTOP_WIDTH=20
+tmux split-window -h -t "$SESSION:$WINDOW" -l "$BTOP_WIDTH"
 tmux send-keys -t "$SESSION:$WINDOW.2" "btop" C-m
 
 tmux select-pane -t "$SESSION:$WINDOW.1"

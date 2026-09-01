@@ -1,32 +1,51 @@
 #!/usr/bin/env bash
 # Plays a short spin-in animation (pre-rendered ANSI frames of the whale rotating),
 # settles on a fixed frame, then fastfetch's stats print directly below it (logo
-# disabled in fastfetch itself — the whale on screen already IS the logo). Ghostty
-# has no native support for animated Kitty-protocol logos (confirmed by the Ghostty
-# maintainer, ghostty-org/ghostty discussion #5218) so this is a plain text flipbook
-# instead, which works in any terminal and at any reasonable width.
+# disabled in fastfetch itself — the whale on screen already IS the logo). Both the
+# whale and the stats are centered in an 80-col pane. Ghostty has no native support
+# for animated Kitty-protocol logos (confirmed by the Ghostty maintainer,
+# ghostty-org/ghostty discussion #5218) so this is a plain text flipbook instead,
+# which works in any terminal.
 set -euo pipefail
 
 CONFIG="${1:-$HOME/.config/fastfetch/umersprofile-stacked.jsonc}"
-FRAMES_DIR="$HOME/.config/fastfetch/small-frames"
+FRAMES_DIR="$HOME/.config/fastfetch/centered-frames"
 FULL_LAPS="${2:-2}"
-STOP_FRAME="${3:-5}"   # s05 = 60deg
+STOP_FRAME="${3:-5}"   # b05 = 60deg
 FRAME_DELAY="${4:-0.05}"
+
+PANE_WIDTH=$(tput cols)
+PANE_HEIGHT=$(tput lines)
+FRAME_WIDTH=50
+FRAME_HEIGHT=13
+STATS_HEIGHT=12
+
+LEFT_PAD_N=$(( (PANE_WIDTH - FRAME_WIDTH) / 2 ))
+[ "$LEFT_PAD_N" -lt 0 ] && LEFT_PAD_N=0
+LEFT_PAD=$(printf '%*s' "$LEFT_PAD_N" '')
+
+TOP_PAD_N=$(( (PANE_HEIGHT - FRAME_HEIGHT - STATS_HEIGHT) / 2 ))
+[ "$TOP_PAD_N" -lt 0 ] && TOP_PAD_N=0
 
 tput civis 2>/dev/null || true
 trap 'tput cnorm 2>/dev/null || true' EXIT
 
+print_frame() {
+  for ((p = 0; p < TOP_PAD_N; p++)); do echo; done
+  sed "s/^/${LEFT_PAD}/" "$1"
+}
+
 for ((i = 0; i < FULL_LAPS; i++)); do
-  for f in "$FRAMES_DIR"/m*.ansi; do
+  for f in "$FRAMES_DIR"/b*.ansi; do
     clear
-    cat "$f"
+    print_frame "$f"
     sleep "$FRAME_DELAY"
   done
 done
 
 for ((n = 0; n <= STOP_FRAME; n++)); do
   clear
-  cat "$FRAMES_DIR/m$(printf '%02d' "$n").ansi"
+  print_frame "$FRAMES_DIR/b$(printf '%02d' "$n").ansi"
   sleep "$FRAME_DELAY"
 done
 
@@ -34,5 +53,6 @@ tput cnorm 2>/dev/null || true
 while read -r -t 0.05 -n 1000 _discard; do :; done 2>/dev/null || true
 # No clear, no cursor-home: the whale stays exactly as printed above, and fastfetch
 # (logo disabled) prints its stats starting right where the cursor already is —
-# directly below the settled whale.
-exec fastfetch --config "$CONFIG"
+# directly below the settled whale, indented to match its left edge.
+fastfetch --config "$CONFIG" | sed "s/^/${LEFT_PAD}/"
+exec "$SHELL" -l
