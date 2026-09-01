@@ -30,7 +30,10 @@ LEFT_PAD_N=$(( (PANE_WIDTH - FRAME_WIDTH) / 2 ))
 [ "$LEFT_PAD_N" -gt 60 ] && LEFT_PAD_N=60
 LEFT_PAD=$(printf '%*s' "$LEFT_PAD_N" '')
 
-TOP_PAD_N=$(( (PANE_HEIGHT - FRAME_HEIGHT - STATS_HEIGHT) / 2 ))
+# Biased toward the top third of the leftover space, not dead-centered (/2) — an
+# even split left too much empty space above the whale relative to below it once
+# fastfetch's stats + the shell prompt print underneath (founder feedback, 2026-09-01).
+TOP_PAD_N=$(( (PANE_HEIGHT - FRAME_HEIGHT - STATS_HEIGHT) / 3 ))
 [ "$TOP_PAD_N" -lt 0 ] && TOP_PAD_N=0
 [ "$TOP_PAD_N" -gt 30 ] && TOP_PAD_N=30
 
