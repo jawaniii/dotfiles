@@ -3,8 +3,8 @@
   "logo": {
     "type": "file-raw",
     "source": "~/.config/fastfetch/whale-3d-logo.ansi",
-    "width": 57,
-    "height": 14
+    "width": 83,
+    "height": 20
   },
   "modules": [
     "title",

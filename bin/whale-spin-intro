@@ -7,22 +7,33 @@
 set -euo pipefail
 
 CONFIG="${1:-$HOME/.config/fastfetch/config.jsonc}"
-FRAMES_DIR="$HOME/.config/fastfetch/loop-frames"
-ROTATIONS="${2:-3}"
-FRAME_DELAY="${3:-0.05}"
+FRAMES_DIR="$HOME/.config/fastfetch/hires-frames"
+FULL_LAPS="${2:-2}"
+STOP_FRAME="${3:-5}"   # r05 = 60deg, matches whale-3d-logo.ansi exactly — the settle
+                        # frame IS the fastfetch logo file, so the cut is invisible.
+FRAME_DELAY="${4:-0.05}"
 
 tput civis 2>/dev/null || true
 trap 'tput cnorm 2>/dev/null || true' EXIT
 
-for ((i = 0; i < ROTATIONS; i++)); do
-  for f in "$FRAMES_DIR"/s*.ansi; do
+for ((i = 0; i < FULL_LAPS; i++)); do
+  for f in "$FRAMES_DIR"/r*.ansi; do
     clear
     cat "$f"
     sleep "$FRAME_DELAY"
   done
 done
 
-clear
+for ((n = 0; n <= STOP_FRAME; n++)); do
+  clear
+  cat "$FRAMES_DIR/r$(printf '%02d' "$n").ansi"
+  sleep "$FRAME_DELAY"
+done
+
 tput cnorm 2>/dev/null || true
 while read -r -t 0.05 -n 1000 _discard; do :; done 2>/dev/null || true
+# Move cursor back to the top WITHOUT erasing (no `clear`) — fastfetch's logo is the
+# exact same file as the frame already on screen, so it overwrites in place with
+# identical characters. Only the stats text (in previously-blank space) appears new.
+printf '\033[H'
 exec fastfetch --config "$CONFIG"
