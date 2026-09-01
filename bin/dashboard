@@ -26,11 +26,17 @@ tmux new-session -d -s "$SESSION" -n "$WINDOW"
 tmux send-keys -t "$SESSION:$WINDOW" "whale-spin-intro ~/.config/fastfetch/umersprofile-stacked.jsonc" C-m
 
 # tmux's -l sizes the NEW pane (btop), not the target — compute btop's width so the
-# whale pane ends up at exactly 80 cols regardless of the real window width.
+# whale pane ends up at 80 cols. btop itself refuses to render below 80 cols wide,
+# so btop's minimum wins if the real window isn't wide enough for both panes to get
+# their full 80 (needs >= 161 cols total for that).
 WHALE_PANE_WIDTH=80
+BTOP_MIN_WIDTH=80
 TOTAL_WIDTH=$(tmux display-message -p -t "$SESSION:$WINDOW" '#{window_width}')
 BTOP_WIDTH=$(( TOTAL_WIDTH - WHALE_PANE_WIDTH - 1 ))
-[ "$BTOP_WIDTH" -lt 20 ] && BTOP_WIDTH=20
+if [ "$BTOP_WIDTH" -lt "$BTOP_MIN_WIDTH" ]; then
+  echo "Window is ${TOTAL_WIDTH} cols — too narrow to give both the whale and btop their full 80 cols (needs >= $((WHALE_PANE_WIDTH + BTOP_MIN_WIDTH + 1))). Giving btop priority (it hard-fails below 80); widen the window for the whale's full 80 too." >&2
+  BTOP_WIDTH="$BTOP_MIN_WIDTH"
+fi
 tmux split-window -h -t "$SESSION:$WINDOW" -l "$BTOP_WIDTH"
 tmux send-keys -t "$SESSION:$WINDOW.2" "btop" C-m
 

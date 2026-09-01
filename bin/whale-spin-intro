@@ -54,5 +54,5 @@ while read -r -t 0.05 -n 1000 _discard; do :; done 2>/dev/null || true
 # No clear, no cursor-home: the whale stays exactly as printed above, and fastfetch
 # (logo disabled) prints its stats starting right where the cursor already is —
 # directly below the settled whale, indented to match its left edge.
-fastfetch --config "$CONFIG" | sed "s/^/${LEFT_PAD}/"
+fastfetch --pipe false --config "$CONFIG" | sed "s/^/${LEFT_PAD}/"
 exec "$SHELL" -l
