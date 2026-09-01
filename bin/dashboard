@@ -38,7 +38,6 @@ REAL_LINES=$(tput lines)
 
 tmux new-session -d -s "$SESSION" -n "$WINDOW" -x "$REAL_COLS" -y "$REAL_LINES"
 tmux set-hook -t "$SESSION" client-detached "kill-session -t \"$SESSION\""
-tmux send-keys -t "$SESSION:$WINDOW" "whale-spin-intro ~/.config/fastfetch/umersprofile-stacked.jsonc" C-m
 
 # tmux's -l sizes the NEW pane (btop) — btop hard-fails below 80 cols, so that's
 # the floor, not a "comfortable" cushion above it. Founder feedback (2026-09-01):
@@ -52,8 +51,16 @@ if [ "$(( TOTAL_WIDTH - BTOP_WIDTH - 1 ))" -lt "$BTOP_MIN_ROOM" ]; then
   BTOP_WIDTH="$BTOP_MIN_WIDTH"
   echo "Window is only ${TOTAL_WIDTH} cols — btop kept at its minimum (80) so the whale pane still gets some room. Widen the window for more whale detail." >&2
 fi
+
+# THIRD landmine fixed here (found live, 2026-09-01): whale-spin-intro used to be
+# launched into pane 1 BEFORE this split — it read `tput cols` against the FULL,
+# un-split window width, centered itself for that width, and then this split
+# immediately shrank the pane out from under it. Deterministic, not a race: the
+# whale was miscentered (pushed left) on EVERY single launch. Split first, so
+# pane 1 is already at its final width before whale-spin-intro ever reads it.
 tmux split-window -h -t "$SESSION:$WINDOW" -l "$BTOP_WIDTH"
 tmux send-keys -t "$SESSION:$WINDOW.2" "btop" C-m
+tmux send-keys -t "$SESSION:$WINDOW.1" "whale-spin-intro ~/.config/fastfetch/umersprofile-stacked.jsonc" C-m
 
 # The -l above only fixes the split at THIS moment's size. If the real Ghostty
 # window hasn't finished settling yet (its GPU-accelerated open animation can
