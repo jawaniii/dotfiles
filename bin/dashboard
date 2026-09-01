@@ -22,7 +22,15 @@ if tmux has-session -t "$SESSION" 2>/dev/null; then
   exit 0
 fi
 
-tmux new-session -d -s "$SESSION" -n "$WINDOW"
+# A detached `tmux new-session -d` has no attached client yet, so it defaults to a
+# fake 80x24 — it does NOT know this real terminal's actual size. Capture the real
+# size from THIS shell (the one dashboard is actually being run from) first, and
+# pass it explicitly so the session starts at the true size instead of tmux's
+# fallback default.
+REAL_COLS=$(tput cols)
+REAL_LINES=$(tput lines)
+
+tmux new-session -d -s "$SESSION" -n "$WINDOW" -x "$REAL_COLS" -y "$REAL_LINES"
 tmux send-keys -t "$SESSION:$WINDOW" "whale-spin-intro ~/.config/fastfetch/umersprofile-stacked.jsonc" C-m
 
 # tmux's -l sizes the NEW pane (btop) — give btop a fixed, comfortable width (it
@@ -30,7 +38,7 @@ tmux send-keys -t "$SESSION:$WINDOW" "whale-spin-intro ~/.config/fastfetch/umers
 # whale pane take whatever's left, so a wider window makes the WHALE bigger, not btop.
 BTOP_WIDTH=85
 BTOP_MIN_WIDTH=80
-TOTAL_WIDTH=$(tmux display-message -p -t "$SESSION:$WINDOW" '#{window_width}')
+TOTAL_WIDTH="$REAL_COLS"
 if [ "$(( TOTAL_WIDTH - BTOP_WIDTH - 1 ))" -lt 20 ]; then
   BTOP_WIDTH="$BTOP_MIN_WIDTH"
   echo "Window is only ${TOTAL_WIDTH} cols — btop kept at its minimum (80) so the whale pane still gets some room. Widen the window for more whale detail." >&2
