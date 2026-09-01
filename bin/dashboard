@@ -10,7 +10,7 @@ if tmux has-session -t "$SESSION" 2>/dev/null; then
 fi
 
 tmux new-session -d -s "$SESSION" -n "$WINDOW"
-tmux send-keys -t "$SESSION:$WINDOW" "fastfetch --config ~/.config/fastfetch/umersprofile-simple.jsonc" C-m
+tmux send-keys -t "$SESSION:$WINDOW" "whale-spin-intro" C-m
 
 tmux split-window -h -t "$SESSION:$WINDOW" -p 50
 tmux send-keys -t "$SESSION:$WINDOW.2" "btop" C-m

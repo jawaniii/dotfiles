@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Plays a short spin-in animation (pre-rendered ANSI frames of the whale rotating)
+# before settling into the real fastfetch banner. Ghostty has no native support for
+# animated Kitty-protocol logos (confirmed by the Ghostty maintainer, ghostty-org/ghostty
+# discussion #5218) so fastfetch's own --logo-animate can't do this on Ghostty — this is
+# a plain text flipbook instead, which works in any terminal.
+set -euo pipefail
+
+FRAMES_DIR="$HOME/.config/fastfetch/spin-frames"
+
+tput civis 2>/dev/null || true
+trap 'tput cnorm 2>/dev/null || true' EXIT
+
+for f in "$FRAMES_DIR"/spin_*.ansi; do
+  clear
+  cat "$f"
+  sleep 0.05
+done
+
+clear
+exec fastfetch --config "$HOME/.config/fastfetch/umersprofile-simple.jsonc"
