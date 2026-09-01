@@ -17,6 +17,10 @@ goto_session() {
   fi
 }
 
+# LANDMINE: if a "dashboard" session is already running, this reattaches to it
+# AS-IS and skips everything below — including the sizing logic. Editing this
+# script has no visible effect until the stale session is killed
+# (`tmux kill-session -t dashboard`) and dashboard is re-run to rebuild it.
 if tmux has-session -t "$SESSION" 2>/dev/null; then
   goto_session
   exit 0
@@ -33,10 +37,11 @@ REAL_LINES=$(tput lines)
 tmux new-session -d -s "$SESSION" -n "$WINDOW" -x "$REAL_COLS" -y "$REAL_LINES"
 tmux send-keys -t "$SESSION:$WINDOW" "whale-spin-intro ~/.config/fastfetch/umersprofile-stacked.jsonc" C-m
 
-# tmux's -l sizes the NEW pane (btop) — give btop a fixed, comfortable width (it
-# doesn't need more than this to render well, and hard-fails below 80) and let the
-# whale pane take whatever's left, so a wider window makes the WHALE bigger, not btop.
-BTOP_WIDTH=85
+# tmux's -l sizes the NEW pane (btop) — btop hard-fails below 80 cols, so that's
+# the floor, not a "comfortable" cushion above it. Founder feedback (2026-09-01):
+# btop reads as too big at 85 — drop straight to the floor and let the whale pane
+# take everything else, so a wider window makes the WHALE bigger, not btop.
+BTOP_WIDTH=80
 BTOP_MIN_WIDTH=80
 TOTAL_WIDTH="$REAL_COLS"
 if [ "$(( TOTAL_WIDTH - BTOP_WIDTH - 1 ))" -lt 20 ]; then
