@@ -7,16 +7,22 @@
 set -euo pipefail
 
 CONFIG="${1:-$HOME/.config/fastfetch/config.jsonc}"
-FRAMES_DIR="$HOME/.config/fastfetch/spin-frames"
+FRAMES_DIR="$HOME/.config/fastfetch/loop-frames"
+ROTATIONS="${2:-3}"
+FRAME_DELAY="${3:-0.05}"
 
 tput civis 2>/dev/null || true
 trap 'tput cnorm 2>/dev/null || true' EXIT
 
-for f in "$FRAMES_DIR"/spin_*.ansi; do
-  clear
-  cat "$f"
-  sleep 0.05
+for ((i = 0; i < ROTATIONS; i++)); do
+  for f in "$FRAMES_DIR"/s*.ansi; do
+    clear
+    cat "$f"
+    sleep "$FRAME_DELAY"
+  done
 done
 
 clear
+tput cnorm 2>/dev/null || true
+while read -r -t 0.05 -n 1000 _discard; do :; done 2>/dev/null || true
 exec fastfetch --config "$CONFIG"

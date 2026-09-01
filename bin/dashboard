@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# DOCKER-101 — personal tmux dashboard: whale spins 10x then idle shell (left) /
-# btop full-height (right)
+# DOCKER-101 — personal tmux dashboard: whale spins 3x, settles, fastfetch loads
+# its stats, then cursor appears (left) / btop full-height (right)
 set -euo pipefail
 
 SESSION="dashboard"
@@ -23,7 +23,7 @@ if tmux has-session -t "$SESSION" 2>/dev/null; then
 fi
 
 tmux new-session -d -s "$SESSION" -n "$WINDOW"
-tmux send-keys -t "$SESSION:$WINDOW" "whale-spin-n 10" C-m
+tmux send-keys -t "$SESSION:$WINDOW" "whale-spin-intro ~/.config/fastfetch/umersprofile-simple.jsonc" C-m
 
 tmux split-window -h -t "$SESSION:$WINDOW" -p 50
 tmux send-keys -t "$SESSION:$WINDOW.2" "btop" C-m
