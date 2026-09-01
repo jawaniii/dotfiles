@@ -15,18 +15,9 @@ FULL_LAPS="${2:-2}"
 STOP_FRAME="${3:-5}"   # b05 = 60deg
 FRAME_DELAY="${4:-0.05}"
 
-PANE_WIDTH=$(tput cols)
-PANE_HEIGHT=$(tput lines)
 FRAME_WIDTH=50
 FRAME_HEIGHT=13
 STATS_HEIGHT=12
-
-# Whale stays centered in the pane, same as its original position — untouched by
-# the text-only left-margin request below.
-WHALE_LEFT_PAD_N=$(( (PANE_WIDTH - FRAME_WIDTH) / 2 ))
-[ "$WHALE_LEFT_PAD_N" -lt 0 ] && WHALE_LEFT_PAD_N=0
-[ "$WHALE_LEFT_PAD_N" -gt 60 ] && WHALE_LEFT_PAD_N=60
-WHALE_LEFT_PAD=$(printf '%*s' "$WHALE_LEFT_PAD_N" '')
 
 # Fastfetch's stats text gets its own small fixed left margin, independent of
 # the whale's position (founder, 2026-09-01: "you moved the whale too, I just
@@ -34,22 +25,39 @@ WHALE_LEFT_PAD=$(printf '%*s' "$WHALE_LEFT_PAD_N" '')
 STATS_LEFT_PAD_N=2
 STATS_LEFT_PAD=$(printf '%*s' "$STATS_LEFT_PAD_N" '')
 
-# Biased toward the top of the leftover space, not dead-centered (/2) — an even
-# split left too much empty space above the whale relative to below it once
-# fastfetch's stats + the shell prompt print underneath. /3, then -3 (2026-09-01,
-# first two passes) still not high enough per live founder feedback — bumped
-# TOP_PAD_TRIM again rather than picking a new fraction blind.
-TOP_PAD_TRIM=5
-TOP_PAD_N=$(( (PANE_HEIGHT - FRAME_HEIGHT - STATS_HEIGHT) / 3 - TOP_PAD_TRIM ))
-[ "$TOP_PAD_N" -lt 0 ] && TOP_PAD_N=0
-[ "$TOP_PAD_N" -gt 30 ] && TOP_PAD_N=30
-
 tput civis 2>/dev/null || true
 trap 'tput cnorm 2>/dev/null || true' EXIT
 
+# Pane width/height are read FRESH on every frame, not cached once at the top —
+# Ghostty's GPU-accelerated open animation can still be resizing the window when
+# this script starts (split-window happens before Ghostty has settled), so a
+# one-shot `tput cols` read here can capture a stale, too-narrow width. That
+# stale width clamps WHALE_LEFT_PAD_N to 0 (whale pinned flush left) and never
+# gets recomputed once printed — tmux doesn't reflow already-written text on a
+# later resize. Recomputing per-frame means the LAST frame drawn (the settled
+# one fastfetch prints under) always reflects the pane's actual final size.
 print_frame() {
-  for ((p = 0; p < TOP_PAD_N; p++)); do echo; done
-  sed "s/^/${WHALE_LEFT_PAD}/" "$1"
+  local pane_width pane_height whale_pad_n whale_pad top_pad_n
+  pane_width=$(tput cols)
+  pane_height=$(tput lines)
+
+  whale_pad_n=$(( (pane_width - FRAME_WIDTH) / 2 ))
+  [ "$whale_pad_n" -lt 0 ] && whale_pad_n=0
+  [ "$whale_pad_n" -gt 60 ] && whale_pad_n=60
+  whale_pad=$(printf '%*s' "$whale_pad_n" '')
+
+  # Biased toward the top of the leftover space, not dead-centered (/2) — an even
+  # split left too much empty space above the whale relative to below it once
+  # fastfetch's stats + the shell prompt print underneath. /3, then -3 (2026-09-01,
+  # first two passes) still not high enough per live founder feedback — bumped
+  # TOP_PAD_TRIM again rather than picking a new fraction blind.
+  local TOP_PAD_TRIM=5
+  top_pad_n=$(( (pane_height - FRAME_HEIGHT - STATS_HEIGHT) / 3 - TOP_PAD_TRIM ))
+  [ "$top_pad_n" -lt 0 ] && top_pad_n=0
+  [ "$top_pad_n" -gt 30 ] && top_pad_n=30
+
+  for ((p = 0; p < top_pad_n; p++)); do echo; done
+  sed "s/^/${whale_pad}/" "$1"
 }
 
 for ((i = 0; i < FULL_LAPS; i++)); do
