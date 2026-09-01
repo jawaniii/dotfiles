@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Spins the whale a fixed number of full rotations, faster than the old loop, then
+# drops into a plain idle shell in the same pane — no fastfetch stats appended.
+set -euo pipefail
+
+FRAMES_DIR="$HOME/.config/fastfetch/loop-frames"
+ROTATIONS="${1:-10}"
+FRAME_DELAY="${2:-0.06}"
+
+tput civis 2>/dev/null || true
+trap 'tput cnorm 2>/dev/null || true' EXIT
+
+for ((i = 0; i < ROTATIONS; i++)); do
+  for f in "$FRAMES_DIR"/s*.ansi; do
+    clear
+    cat "$f"
+    sleep "$FRAME_DELAY"
+  done
+done
+
+clear
+tput cnorm 2>/dev/null || true
+exec "$SHELL" -l
