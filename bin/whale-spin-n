@@ -20,4 +20,7 @@ done
 
 clear
 tput cnorm 2>/dev/null || true
+# Drain any stray keystrokes typed during the spin so they don't merge into
+# the first command in the fresh shell below.
+while read -r -t 0.05 -n 1000 _discard; do :; done 2>/dev/null || true
 exec "$SHELL" -l
