@@ -3,7 +3,7 @@
 # the dashboard launcher (~/.local/bin/dashboard) controls exactly which pane
 # shows fastfetch, so an unconditional call here would duplicate it in every pane.
 if [ -z "$TMUX" ]; then
-  fastfetch
+  whale-spin-intro
 fi
 # <<< dotfiles: tmux-guarded fastfetch <<<
 
