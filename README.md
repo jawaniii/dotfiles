@@ -14,6 +14,8 @@ rebuilt on a new machine in one command instead of redoing everything by hand.
 | `fastfetch/umersprofile-simple.jsonc` | `~/.config/fastfetch/umersprofile-simple.jsonc` | curated banner for the tmux dashboard / recordings |
 | `fastfetch/hero-video.jsonc` | `~/.config/fastfetch/hero-video.jsonc` | curated banner for the docker-factory hero-video recording |
 | `btop/btop.conf` + `btop/themes/catppuccin_mocha.theme` | `~/.config/btop/` | Catppuccin Mocha theme ([catppuccin/btop](https://github.com/catppuccin/btop)) |
+| `vim/vimrc` | `~/.vimrc` | Gruvbox dark, truecolor only where the terminal supports it (Apple Terminal garbles it); Catppuccin and Tokyo Night installed as alternates |
+| `glow/glow.yml` | `~/Library/Preferences/glow/glow.yml` | [Glow](https://github.com/charmbracelet/glow) markdown reader, `pink` style as default. Read docs with `glow -p file.md` |
 | `bin/dashboard` | `~/.local/bin/dashboard` | launches the 2-pane tmux dashboard (fastfetch left, btop right) |
 | `bin/tmux-toggle-btop` | `~/.local/bin/tmux-toggle-btop` | bound to `prefix+b`, hides/shows the btop pane |
 | `zsh/tmux-guard-snippet.sh` | appended to `~/.zshrc` | runs fastfetch on shell start, but skips it inside tmux (avoids duplicating the banner in every pane) |

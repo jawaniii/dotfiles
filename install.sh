@@ -12,6 +12,18 @@ brew list tmux &>/dev/null || brew install tmux
 brew list btop &>/dev/null || brew install btop
 brew list fastfetch &>/dev/null || brew install fastfetch
 brew list starship &>/dev/null || brew install starship
+brew list glow &>/dev/null || brew install glow
+
+echo "==> Installing Vim colour schemes (native packages, no plugin manager)"
+vim_theme() {
+  local url="$1" name="$2" dst="$HOME/.vim/pack/themes/start/$2"
+  [ -d "$dst" ] && return
+  mkdir -p "$(dirname "$dst")"
+  git clone --depth 1 "$url" "$dst"
+}
+vim_theme https://github.com/morhetz/gruvbox.git          gruvbox
+vim_theme https://github.com/catppuccin/vim.git           catppuccin
+vim_theme https://github.com/ghifarit53/tokyonight-vim.git tokyonight
 
 link() {
   local src="$1" dst="$2"
@@ -41,6 +53,8 @@ link "$DOTFILES/fastfetch/spin-frames"                 "$HOME/.config/fastfetch/
 link "$DOTFILES/fastfetch/centered-frames"             "$HOME/.config/fastfetch/centered-frames"
 link "$DOTFILES/btop/btop.conf"                        "$HOME/.config/btop/btop.conf"
 link "$DOTFILES/btop/themes/catppuccin_mocha.theme"    "$HOME/.config/btop/themes/catppuccin_mocha.theme"
+link "$DOTFILES/vim/vimrc"                             "$HOME/.vimrc"
+link "$DOTFILES/glow/glow.yml"                         "$HOME/Library/Preferences/glow/glow.yml"
 link "$DOTFILES/bin/dashboard"                         "$HOME/.local/bin/dashboard"
 link "$DOTFILES/bin/dashboard-or-shell"                "$HOME/.local/bin/dashboard-or-shell"
 link "$DOTFILES/bin/tmux-toggle-btop"                  "$HOME/.local/bin/tmux-toggle-btop"

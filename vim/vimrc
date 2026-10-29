@@ -1,0 +1,22 @@
+syntax on
+" truecolor only where supported (Apple Terminal does not, and garbles it)
+if $TERM_PROGRAM !=# 'Apple_Terminal' && ($COLORTERM ==# 'truecolor' || $COLORTERM ==# '24bit')
+  set termguicolors
+endif
+set background=dark
+" white body text instead of Tokyo Night's blue-grey
+augroup WhiteText
+  autocmd!
+  autocmd ColorScheme tokyonight highlight Normal guifg=#ffffff ctermfg=231
+augroup END
+let g:gruvbox_contrast_dark = 'medium'
+silent! colorscheme gruvbox
+" others installed: tokyonight (night), catppuccin_mocha, catppuccin_latte
+" to use tokyonight: let g:tokyonight_style = 'night' then colorscheme tokyonight
+
+set number
+set cursorline
+set laststatus=2
+set showcmd
+set wrap linebreak
+set scrolloff=5
